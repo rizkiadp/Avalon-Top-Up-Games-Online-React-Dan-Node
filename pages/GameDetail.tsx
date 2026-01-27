@@ -73,7 +73,12 @@ export const GameDetail: React.FC = () => {
       {/* Sidebar Info */}
       <div className="lg:col-span-1 space-y-6">
         <div className="glass-panel p-6 rounded-2xl sticky top-24 z-10">
-          <img src={game.image} className="w-full aspect-[3/4] object-cover rounded-xl mb-6 shadow-neon" alt={game.name} />
+          <img
+            src={game.image}
+            className="w-full aspect-[3/4] object-cover rounded-xl mb-6 shadow-neon"
+            alt={game.name}
+            onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/600x800?text=No+Image'; }}
+          />
           <h1 className="text-3xl font-bold mb-2">{game.name}</h1>
           <p className="text-slate-400 text-sm mb-4 leading-relaxed">{game.description}</p>
           <div className="flex items-center gap-2 text-primary font-bold">
@@ -157,20 +162,26 @@ export const GameDetail: React.FC = () => {
             <h2 className="text-xl font-bold uppercase tracking-wider">Nominal Top Up</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {db.getDenominations().map((denom) => (
-              <button
-                key={denom.id}
-                onClick={() => setSelectedDenom(denom)}
-                className={`p-4 rounded-xl border transition-all text-left relative group ${selectedDenom?.id === denom.id
-                  ? 'bg-primary/20 border-primary shadow-neon ring-1 ring-primary/50'
-                  : 'bg-surface-dark border-white/10 hover:border-primary/50'
-                  }`}
-              >
-                <p className="font-bold text-lg mb-1">{denom.amount}</p>
-                <p className="text-primary text-xs font-mono">Rp {denom.price.toLocaleString()}</p>
-                {denom.bonus && <span className="absolute -top-2 -right-2 bg-secondary text-white text-[8px] px-2 py-1 rounded-full font-bold shadow-lg animate-bounce">{denom.bonus}</span>}
-              </button>
-            ))}
+            {game.items && game.items.length > 0 ? (
+              game.items.map((item: any) => (
+                <button
+                  key={item.id}
+                  onClick={() => setSelectedDenom({ id: item.id.toString(), amount: item.name, price: item.price, bonus: item.bonus })}
+                  className={`p-4 rounded-xl border transition-all text-left relative group ${selectedDenom?.amount === item.name
+                    ? 'bg-primary/20 border-primary shadow-neon ring-1 ring-primary/50'
+                    : 'bg-surface-dark border-white/10 hover:border-primary/50'
+                    }`}
+                >
+                  <p className="font-bold text-lg mb-1">{item.name}</p>
+                  <p className="text-primary text-xs font-mono">Rp {item.price.toLocaleString()}</p>
+                  {item.bonus && <span className="absolute -top-2 -right-2 bg-secondary text-white text-[8px] px-2 py-1 rounded-full font-bold shadow-lg animate-bounce">{item.bonus}</span>}
+                </button>
+              ))
+            ) : (
+              <div className="col-span-3 text-center text-slate-500 py-8">
+                No items available for this game configuration.
+              </div>
+            )}
           </div>
         </section>
 
@@ -181,7 +192,7 @@ export const GameDetail: React.FC = () => {
             <h2 className="text-xl font-bold uppercase tracking-wider">Pembayaran</h2>
           </div>
           <div className="space-y-6">
-            {['Automatic', 'E-Wallet', 'Bank Transfer', 'Retail'].map((group) => (
+            {['Automatic'].map((group) => (
               <div key={group}>
                 <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">{group}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

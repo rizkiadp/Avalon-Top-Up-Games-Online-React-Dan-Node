@@ -7,6 +7,17 @@ export interface Game {
   isHot?: boolean;
   discount?: string;
   description: string;
+  brand?: string; // Provider Game Code
+  items?: GameItem[];
+}
+
+export interface GameItem {
+  id: number;
+  gameId: string;
+  name: string;
+  price: number;
+  code: string;
+  bonus?: string;
 }
 
 export interface Denomination {

@@ -6,6 +6,12 @@ module.exports = app => {
     // Create a new Transaction
     router.post("/", transactions.create);
 
+    // Retrieve Stats (Admin) - Must be before /:id
+    router.get("/stats", transactions.getStats);
+
+    // Retrieve all Transactions (Admin)
+    router.get("/", transactions.findAll);
+
     // Retrieve all Transactions for a user
     router.get("/user/:userId", transactions.findAllByUser);
 

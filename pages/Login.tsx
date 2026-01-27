@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { db } from '../services/dbService';
 
 export const Login: React.FC = () => {
@@ -11,19 +11,38 @@ export const Login: React.FC = () => {
 
   const isAdminMode = username.toLowerCase() === 'admin';
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) return;
-    
+
     setIsLoading(true);
-    setTimeout(() => {
-      const user = db.login(username);
-      setIsLoading(true); // stay loading for transition
-      setTimeout(() => {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }) // Send password as plain text as requested: admin/admin
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Success
+        setTimeout(() => {
+          setIsLoading(false);
+          // Store token if needed, or just navigate based on role
+          localStorage.setItem('avalon_session', JSON.stringify(data));
+          navigate(data.role.toLowerCase() === 'admin' ? '/admin' : '/');
+        }, 1000);
+      } else {
+        // Error
         setIsLoading(false);
-        navigate(user.role === 'Admin' ? '/admin' : '/');
-      }, 500);
-    }, 1200);
+        alert(data.message || "Login failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setIsLoading(false);
+      alert("Login error");
+    }
   };
 
   return (
@@ -53,8 +72,8 @@ export const Login: React.FC = () => {
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Username / Alias</label>
               <div className="relative">
                 <span className={`absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[20px] transition-colors ${isAdminMode ? 'text-red-500' : 'text-slate-500'}`}>person</span>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className={`w-full bg-background-dark/50 border rounded-xl pl-12 pr-4 py-4 text-white focus:outline-none transition-all font-body ${isAdminMode ? 'border-red-500/50 focus:border-red-400' : 'border-white/10 focus:border-primary'}`}
@@ -68,8 +87,8 @@ export const Login: React.FC = () => {
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Access Code</label>
               <div className="relative">
                 <span className={`absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[20px] transition-colors ${isAdminMode ? 'text-red-500' : 'text-slate-500'}`}>key</span>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`w-full bg-background-dark/50 border rounded-xl pl-12 pr-4 py-4 text-white focus:outline-none transition-all font-body ${isAdminMode ? 'border-red-500/50 focus:border-red-400' : 'border-white/10 focus:border-primary'}`}
@@ -79,7 +98,7 @@ export const Login: React.FC = () => {
               </div>
             </div>
 
-            <button 
+            <button
               type="submit"
               disabled={isLoading}
               className={`w-full text-background-dark py-4 rounded-xl font-bold text-lg shadow-neon hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 ${isAdminMode ? 'bg-gradient-to-r from-red-600 to-orange-500 shadow-[0_0_20px_rgba(239,68,68,0.4)]' : 'bg-gradient-to-r from-primary to-secondary'}`}
@@ -99,11 +118,11 @@ export const Login: React.FC = () => {
           </form>
 
           <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4 text-center">
-            <p className="text-xs text-slate-500">New operator? <button className="text-primary hover:underline" type="button">Register Sub-Protocol</button></p>
+            <p className="text-xs text-slate-500">New operator? <Link to="/register" className="text-primary hover:underline">Register Sub-Protocol</Link></p>
             <button className="text-[10px] text-slate-600 font-mono hover:text-white transition-colors uppercase tracking-widest" type="button">Emergency Data Recovery</button>
           </div>
         </div>
-        
+
         <p className="text-center mt-8 text-[10px] text-slate-700 font-mono tracking-widest uppercase">
           Signal: Secure // Node: Avalon-Mainframe // Ping: 14ms
         </p>

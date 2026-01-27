@@ -1,16 +1,21 @@
 
 import React, { useState, useEffect } from 'react';
-import { db } from '../services/dbService';
 import { useNavigate } from 'react-router-dom';
+import { Game } from '../types';
+
+const API_URL = 'http://localhost:5000/api';
 
 export const Landing: React.FC = () => {
   const navigate = useNavigate();
-  const [games, setGames] = useState<any[]>([]);
+  const [games, setGames] = useState<Game[]>([]);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
 
   useEffect(() => {
-    db.getGames().then(setGames).catch(console.error);
+    fetch(`${API_URL}/games`)
+      .then(res => res.json())
+      .then(data => setGames(data))
+      .catch(console.error);
   }, []);
 
   const categories = ['All', 'RPG', 'Shooter', 'MOBA', 'Battle Royale'];
@@ -103,7 +108,12 @@ export const Landing: React.FC = () => {
                   {game.isHot && <span className="px-3 py-1 bg-secondary text-white text-[10px] font-bold rounded-full uppercase shadow-lg">Trending</span>}
                   {game.discount && <span className="px-3 py-1 bg-primary text-black text-[10px] font-bold rounded-full uppercase shadow-lg">{game.discount}</span>}
                 </div>
-                <img src={game.image} className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110" alt={game.name} />
+                <img
+                  src={game.image}
+                  className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110"
+                  alt={game.name}
+                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/600x800?text=No+Image'; }}
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/20 to-transparent opacity-80 group-hover:opacity-40 transition-opacity"></div>
 
                 {/* Overlay Button - Fixed visibility for Mobile */}

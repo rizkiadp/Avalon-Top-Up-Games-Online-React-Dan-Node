@@ -96,16 +96,80 @@ const pollPaymentStatus = async (transactionId) => {
 
 exports.findAllByUser = (req, res) => {
     const userId = req.params.userId;
-    Transaction.findAll({ where: { userId: userId }, order: [['createdAt', 'DESC']] })
-        .then(data => res.send(data))
+    Transaction.findAll({
+        where: { userId: userId },
+        order: [['createdAt', 'DESC']],
+        include: ["game"]
+    })
+        .then(data => {
+            // Map to include gameIcon flatly
+            const results = data.map(t => {
+                const json = t.toJSON();
+                return {
+                    ...json,
+                    gameIcon: t.game ? t.game.image : null,
+                    date: t.timestamp // Map timestamp to date for frontend compatibility
+                };
+            });
+            res.send(results);
+        })
         .catch(err => res.status(500).send({ message: err.message }));
+};
+
+// Retrieve all Transactions (Admin)
+exports.findAll = (req, res) => {
+    Transaction.findAll({
+        order: [['createdAt', 'DESC']],
+        include: ["game"]
+    })
+        .then(data => {
+            const results = data.map(t => {
+                const json = t.toJSON();
+                return {
+                    ...json,
+                    gameIcon: t.game ? t.game.image : null,
+                    date: t.timestamp
+                };
+            });
+            res.send(results);
+        })
+        .catch(err => res.status(500).send({ message: err.message }));
+};
+
+// Get System Stats (Admin) - unchanged
+exports.getStats = async (req, res) => {
+    try {
+        const totalRevenue = await Transaction.sum('price', { where: { status: 'Success' } });
+        const totalOrders = await Transaction.count();
+        const successOrders = await Transaction.count({ where: { status: 'Success' } });
+        const successRate = totalOrders ? ((successOrders / totalOrders) * 100).toFixed(1) : 0;
+
+        // Count active games
+        const activeGames = await db.games.count();
+
+        res.send({
+            totalRevenue: totalRevenue || 0,
+            totalOrders: totalOrders,
+            successRate: successRate,
+            activeGames: activeGames
+        });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
 };
 
 exports.findOne = (req, res) => {
     const id = req.params.id;
-    Transaction.findByPk(id)
+    Transaction.findByPk(id, { include: ["game"] })
         .then(data => {
-            if (data) res.send(data);
+            if (data) {
+                const json = data.toJSON();
+                res.send({
+                    ...json,
+                    gameIcon: data.game ? data.game.image : null,
+                    date: data.timestamp
+                });
+            }
             else res.status(404).send({ message: `Cannot find Transaction with id=${id}.` });
         })
         .catch(err => res.status(500).send({ message: "Error retrieving Transaction with id=" + id }));

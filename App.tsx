@@ -6,6 +6,7 @@ import { AdminDashboard } from './pages/Admin';
 import { GameDetail } from './pages/GameDetail';
 import { History } from './pages/History';
 import { Login } from './pages/Login';
+import { Register } from './pages/Register';
 import { Success } from './pages/Success';
 import { AIChat } from './components/AIChat';
 import { db } from './services/dbService';
@@ -31,7 +32,7 @@ const Navbar: React.FC = () => {
             </div>
             <span className="text-xl font-bold tracking-tighter uppercase">AVALON<span className="text-primary">GAMES</span></span>
           </Link>
-          
+
           <div className="hidden md:flex items-center gap-8 text-xs font-bold tracking-widest">
             <Link to="/" className={`${location.pathname === '/' ? 'text-primary' : 'text-slate-400'} hover:text-white transition-colors uppercase`}>Home</Link>
             <Link to="/history" className={`${location.pathname === '/history' ? 'text-primary' : 'text-slate-400'} hover:text-white transition-colors uppercase`}>Riwayat</Link>
@@ -56,20 +57,20 @@ const Navbar: React.FC = () => {
                 </div>
                 {/* Dropdown Logout */}
                 <div className="absolute right-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                   <div className="glass-panel p-2 rounded-xl min-w-[150px] border border-white/10 shadow-2xl">
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-xs font-bold text-red-400 hover:bg-white/5 rounded-lg flex items-center gap-2"
-                      >
-                        <span className="material-symbols-outlined text-sm">logout</span> LOGOUT
-                      </button>
-                   </div>
+                  <div className="glass-panel p-2 rounded-xl min-w-[150px] border border-white/10 shadow-2xl">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-xs font-bold text-red-400 hover:bg-white/5 rounded-lg flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">logout</span> LOGOUT
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
-            <Link 
-              to="/login" 
+            <Link
+              to="/login"
               className="bg-primary text-background-dark px-6 py-2 rounded-xl font-bold text-xs shadow-neon hover:scale-105 transition-all flex items-center gap-2"
             >
               <span className="material-symbols-outlined text-sm font-bold">login</span> LOGIN SYSTEM
@@ -93,7 +94,7 @@ const Footer: React.FC = () => (
           Platform top-up game paling aman dan terpercaya di ekosistem digital. Kami berkomitmen untuk memberikan pengalaman transaksi instan bagi gamer di seluruh dunia.
         </p>
       </div>
-      
+
       <div className="flex flex-col gap-4">
         <h4 className="font-bold text-sm tracking-widest uppercase text-white">Menu Utama</h4>
         <Link to="/" className="text-slate-500 hover:text-primary text-sm transition-colors">Semua Game</Link>
@@ -127,6 +128,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/game/:id" element={<GameDetail />} />
           <Route path="/history" element={<History />} />
           <Route path="/success/:id" element={<Success />} />

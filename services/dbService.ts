@@ -62,8 +62,14 @@ export const db = {
   },
 
   getCurrentUser: (): User | null => {
-    const data = localStorage.getItem('avalon_session');
-    return data ? JSON.parse(data) : null;
+    try {
+      const data = localStorage.getItem('avalon_session');
+      return data ? JSON.parse(data) : null;
+    } catch (e) {
+      console.error("Session Parse Error", e);
+      localStorage.removeItem('avalon_session'); // Clear bad data
+      return null;
+    }
   },
 
   // Static Data

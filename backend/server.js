@@ -7,7 +7,7 @@ const db = require('./models');
 const app = express();
 
 const corsOptions = {
-    origin: 'http://localhost:5173' // Frontend URL
+    origin: ['http://localhost:5173', 'http://localhost:3000'] // Allow both default and custom ports
 };
 
 app.use(cors(corsOptions));
@@ -22,13 +22,14 @@ app.get('/', (req, res) => {
 // Routes
 require('./routes/transaction.routes')(app);
 require('./routes/game.routes')(app);
+require('./routes/auth.routes')(app);
 
 const seed = require('./seeders/init');
 
 const PORT = process.env.PORT || 5000;
 
 // Sync Database
-db.sequelize.sync()
+db.sequelize.sync({ alter: true })
     .then(() => {
         console.log("Synced db.");
         seed();

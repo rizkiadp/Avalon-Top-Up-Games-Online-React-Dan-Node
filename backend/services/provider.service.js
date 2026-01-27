@@ -9,6 +9,10 @@ const APIGAMES_BASE_URL = 'https://v1.apigames.id/merchant';
 const MERCHANT_ID = process.env.APIGAMES_MERCHANT_ID;
 const SECRET_KEY = process.env.APIGAMES_SECRET_KEY;
 
+const db = require("../models");
+const Game = db.games;
+const GameItem = db.items;
+
 exports.processTopUp = async (transaction) => {
     // ... (Keep existing logic)
     console.log(`[APIGAMES] Processing Top Up for ${transaction.gameName} (${transaction.item})`);
@@ -17,9 +21,24 @@ exports.processTopUp = async (transaction) => {
         throw new Error("APIGAMES credentials not configured in .env");
     }
 
+    // Fetch Game and Item details for Codes
+    const game = await Game.findByPk(transaction.gameId);
+    if (!game || !game.brand) throw new Error(`Game Brand not configured for ${transaction.gameId}`);
+
+    // Try to find item by name and gameId - This assumes transaction.item matches GameItem.name
+    // A better approach would be to store itemId in transaction, but for now we match by name
+    const gameItem = await GameItem.findOne({
+        where: {
+            gameId: transaction.gameId,
+            name: transaction.item
+        }
+    });
+
+    if (!gameItem || !gameItem.code) throw new Error(`Item Code not configured for ${transaction.item}`);
+
     // 1. Prepare Payload for Apigames
     const refId = transaction.id;
-    const productCode = getProductCode(transaction.gameId, transaction.item);
+    const productCode = gameItem.code; // Use DB Code
 
     // Extract ID and ZoneID from format "12345 (6789)"
     let tujuan = transaction.userGameId || transaction.userId;
@@ -87,14 +106,10 @@ exports.processTopUp = async (transaction) => {
 exports.checkUsername = async (gameCode, userId, zoneId = '') => {
     if (!MERCHANT_ID || !SECRET_KEY) throw new Error("Credentials missing");
 
-    const gameCodeMap = {
-        'genshin': 'genshin-impact',
-        'mlbb': 'mobilelegend', // Updated from mobile-legends
-        'pubgm': 'pubgmobile',   // Updated from pubg-mobile
-        'freefire': 'freefire'   // Updated from free-fire
-    };
-
-    const code = gameCodeMap[gameCode] || gameCode;
+    // Fetch Brand from DB
+    const game = await Game.findByPk(gameCode);
+    // If brand is not set in DB, fallback to gameCode itself (or hardcoded map if needed temporarily)
+    const code = (game && game.brand) ? game.brand : gameCode;
 
     // Signature (Based on Search Result): md5(merchant_id + secret_key)
     const signatureSource = MERCHANT_ID + SECRET_KEY;
@@ -140,25 +155,4 @@ exports.checkUsername = async (gameCode, userId, zoneId = '') => {
     }
 };
 
-function getProductCode(gameId, item) {
-    const map = {
-        'genshin': { '60 Gems': 'GI60', '300 Gems': 'GI300' },
-        'mlbb': {
-            '10 (9 + 1) Diamonds': 'KCIDMBL10',
-            '14 (13 + 1) Diamonds': 'KCIDMBL14',
-            '18 (17 + 1) Diamonds': 'KCIDMBL18',
-            '36 (33 + 3) Diamonds': 'KCIDMBL36',
-            '74 (67 + 7) Diamonds': 'KCIDMBL74',
-            '222 (200 + 22) Diamonds': 'KCIDMBL222',
-            '370 (333 + 37) Diamonds': 'KCIDMBL370',
-            '966 (836 + 130) Diamonds': 'KCIDMBL966',
-            '2010 (1708 + 302) Diamonds': 'KCIDMBL2010',
-            'Weekly Diamond Pass': 'KCIDMBLWP',
-            'Twilight Pass': 'KCIDMBLTP'
-        },
-        'pubgm': { '60 UC': 'PUBG60' }
-    };
-    // Normalize item name match (case insensitive optional)
-    return map[gameId]?.[item] || 'UNKNOWN_CODE';
-
-}
+// Deprecated: getProductCode is now handled via DB lookup in processTopUp

@@ -12,7 +12,11 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING
         },
         image: {
-            type: Sequelize.STRING
+            type: Sequelize.TEXT
+        },
+        brand: {
+            type: Sequelize.STRING, // Provider Game Code (e.g. 'mobilelegend')
+            allowNull: true
         },
         isHot: {
             type: Sequelize.BOOLEAN,

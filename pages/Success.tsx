@@ -1,19 +1,25 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { db } from '../services/dbService';
+import { Transaction } from '../types';
 
 export const Success: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const txn = db.getTransactionById(id || '');
+  const [txn, setTxn] = useState<Transaction | null>(null);
 
   useEffect(() => {
-    if (!txn) {
-      const timer = setTimeout(() => navigate('/'), 3000);
-      return () => clearTimeout(timer);
+    if (id) {
+      db.getTransactionById(id).then(data => {
+        if (data) setTxn(data);
+        else {
+          // Not found or error
+          setTimeout(() => navigate('/'), 3000);
+        }
+      });
     }
-  }, [txn, navigate]);
+  }, [id, navigate]);
 
   if (!txn) {
     return (
@@ -38,17 +44,17 @@ export const Success: React.FC = () => {
         {/* Receipt Panel */}
         <div className="glass-panel rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
           <div className="bg-surface-dark p-6 border-b border-white/5 flex justify-between items-center">
-             <div className="flex items-center gap-3">
-                <img src={txn.gameIcon} className="size-10 rounded-lg object-cover" alt="" />
-                <div>
-                   <p className="text-xs text-slate-500 font-bold uppercase">{txn.gameName}</p>
-                   <p className="font-bold text-primary">{txn.item}</p>
-                </div>
-             </div>
-             <div className="text-right">
-                <p className="text-[10px] text-slate-500 font-mono uppercase">Status</p>
-                <p className="text-xs font-bold text-green-400">SUCCESS</p>
-             </div>
+            <div className="flex items-center gap-3">
+              <img src={txn.gameIcon} className="size-10 rounded-lg object-cover" alt="" />
+              <div>
+                <p className="text-xs text-slate-500 font-bold uppercase">{txn.gameName}</p>
+                <p className="font-bold text-primary">{txn.item}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] text-slate-500 font-mono uppercase">Status</p>
+              <p className="text-xs font-bold text-green-400">SUCCESS</p>
+            </div>
           </div>
 
           <div className="p-8 space-y-4">
@@ -62,7 +68,7 @@ export const Success: React.FC = () => {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Date & Time</span>
-              <span className="text-white">{txn.date}</span>
+              <span className="text-white">{txn.date ? new Date(txn.date).toLocaleString() : ''}</span>
             </div>
             <div className="h-px bg-white/5 my-4 border-dashed border-t"></div>
             <div className="flex justify-between items-center">
@@ -78,14 +84,14 @@ export const Success: React.FC = () => {
 
         {/* Actions */}
         <div className="grid grid-cols-2 gap-4 mt-8">
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="bg-surface-dark border border-white/10 py-4 rounded-2xl font-bold text-center hover:bg-white/5 transition-all flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-[20px]">home</span> HOME
           </Link>
-          <Link 
-            to="/history" 
+          <Link
+            to="/history"
             className="bg-primary text-background-dark py-4 rounded-2xl font-bold text-center shadow-neon hover:scale-105 transition-all flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-[20px]">history</span> HISTORY

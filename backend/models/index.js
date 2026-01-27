@@ -26,6 +26,22 @@ db.sequelize = sequelize;
 
 db.users = require("./user.model.js")(sequelize, Sequelize);
 db.games = require("./game.model.js")(sequelize, Sequelize);
+db.items = require("./item.model.js")(sequelize, Sequelize); // New
 db.transactions = require("./transaction.model.js")(sequelize, Sequelize);
+
+// Relations
+db.games.hasMany(db.items, { as: "items" });
+db.items.belongsTo(db.games, {
+    foreignKey: "gameId",
+    as: "game",
+});
+
+db.transactions.belongsTo(db.games, {
+    foreignKey: "gameId",
+    as: "game",
+});
+db.games.hasMany(db.transactions, {
+    as: "transactions"
+});
 
 module.exports = db;
