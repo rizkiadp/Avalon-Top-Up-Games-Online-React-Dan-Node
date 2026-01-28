@@ -80,7 +80,7 @@ exports.create = async (req, res) => {
 // Internal function to poll payment status
 const pollPaymentStatus = async (transactionId) => {
     let attempts = 0;
-    const maxAttempts = 30; // 30 * 2s = 60s polling
+    const maxAttempts = 150; // 150 * 2s = 300s (5 minutes) polling
 
     const interval = setInterval(async () => {
         attempts++;
@@ -126,6 +126,78 @@ const pollPaymentStatus = async (transactionId) => {
             console.error("Polling Error:", error.message);
         }
     }, 2000);
+};
+
+// Handle Midtrans Notification (Webhook)
+exports.notification = async (req, res) => {
+    try {
+        const statusResponse = req.body;
+        console.log(`[Midtrans] Notification received for ${statusResponse.order_id}`);
+        console.log(`[Midtrans] Status: ${statusResponse.transaction_status}, Fraud: ${statusResponse.fraud_status}`);
+
+        const transactionId = statusResponse.order_id;
+        const transaction = await Transaction.findByPk(transactionId);
+
+        if (!transaction) {
+            return res.status(404).send({ message: "Transaction not found" });
+        }
+
+        // If already success/failed, ignore
+        if (transaction.status === 'Success' || transaction.status === 'Failed') {
+            return res.status(200).send({ message: "Transaction already processed" });
+        }
+
+        let orderStatus = 'PENDING';
+        if (statusResponse.transaction_status == 'capture') {
+            if (statusResponse.fraud_status == 'challenge') {
+                orderStatus = 'CHALLENGE';
+            } else if (statusResponse.fraud_status == 'accept') {
+                orderStatus = 'PAID';
+            }
+        } else if (statusResponse.transaction_status == 'settlement') {
+            orderStatus = 'PAID';
+        } else if (statusResponse.transaction_status == 'cancel' ||
+            statusResponse.transaction_status == 'deny' ||
+            statusResponse.transaction_status == 'expire') {
+            orderStatus = 'FAILED';
+        } else if (statusResponse.transaction_status == 'pending') {
+            orderStatus = 'PENDING';
+        }
+
+        if (orderStatus === 'PAID') {
+            // Update to Processing
+            transaction.status = 'Processing';
+            await transaction.save();
+            console.log(`[Webhook] Payment CONFIRMED for ${transactionId}.`);
+            await logAction(transaction.userId, "system", "PAYMENT_RECEIVED_WEBHOOK", `Payment received for ${transactionId}`);
+
+            // Trigger Provider (Apigames)
+            try {
+                const providerResult = await ProviderService.processTopUp(transaction);
+                if (providerResult.success) {
+                    transaction.status = 'Success';
+                    await transaction.save();
+                    console.log(`[Webhook] Transaction ${transactionId} SUCCESS.`);
+                    await logAction(transaction.userId, "system", "TRANSACTION_SUCCESS", `Topup success for ${transactionId}`);
+                }
+            } catch (provErr) {
+                transaction.status = 'Failed';
+                await transaction.save();
+                console.error(`[Webhook] Provider Failed:`, provErr);
+                await logAction(transaction.userId, "system", "TRANSACTION_FAILED", `Provider failed for ${transactionId}: ${provErr.message}`);
+            }
+        } else if (orderStatus === 'FAILED') {
+            transaction.status = 'Failed';
+            await transaction.save();
+            await logAction(transaction.userId, "system", "TRANSACTION_FAILED", `Payment failed for ${transactionId}`);
+        }
+
+        res.status(200).send({ message: "OK" });
+
+    } catch (error) {
+        console.error("[Midtrans] Notification Error:", error.message);
+        res.status(500).send({ message: error.message });
+    }
 };
 
 exports.findAllByUser = (req, res) => {

@@ -15,6 +15,9 @@ module.exports = app => {
     // Retrieve all Transactions for a user
     router.get("/user/:userId", transactions.findAllByUser);
 
+    // Midtrans Notification
+    router.post("/notification", transactions.notification);
+
     // Retrieve a single Transaction with id
     router.get("/:id", transactions.findOne);
 
