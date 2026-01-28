@@ -2,7 +2,7 @@
 
 Platform Top-Up Game profesional yang aman, cepat, dan responsif. Terintegrasi dengan **Midtrans** (Pembayaran) dan **Apigames** (Provider Game).
 
-![Avalon Games Banner](https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800)
+![Avalon Games Banner](https://i.ibb.co/8Lc8HJbB/avalon.png)
 
 ## ✨ Fitur Utama (Features)
 
