@@ -1,115 +1,107 @@
-# Avalon Games Platform
+# Avalon Games Platform 🎮
 
-Platform Top-Up Game otomatis yang terintegrasi dengan **Midtrans** (Pembayaran) dan **Apigames** (Provider Vouchers/Diamonds). Dibangun menggunakan React (Frontend) dan Node.js Express (Backend).
+Platform Top-Up Game profesional yang aman, cepat, dan responsif. Terintegrasi dengan **Midtrans** (Pembayaran) dan **Apigames** (Provider Game).
+
+![Avalon Games Banner](https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800)
+
+## ✨ Fitur Utama (Features)
+
+### 👤 Frontend (User)
+*   **Browsing Game**: Kategori game lengkap (Mobile Legends, Free Fire, dll) dengan filter & pencarian.
+*   **Dynamic Banners**: Banner informasi promo yang dinamis dan terupdate.
+*   **Transaksi Instan**: Cek ID otomatis dan pembayaran via Midtrans Snap.
+*   **Sistem Voucher**: Gunakan kode promo untuk diskon spesial saat checkout.
+*   **Mobile Responsive**: Tampilan optimal di HP dengan Mobile Navbar & Layout adaptif.
+*   **User Profile**: Kelola data diri dan riwayat transaksi.
+*   **Auth System**: Login, Register, dan Verifikasi Email (OTP).
+
+### 🛡️ Dashboard Admin
+*   **Traffic Analytics**: Grafik kunjungan website harian real-time.
+*   **Banner Management**: Upload, aktifkan, atau hapus banner promo.
+*   **Voucher Management**: Buat kode voucher, atur diskon, kuota, dan masa berlaku.
+*   **System Logs**: Pantau aktivitas sistem (Login, Error, Transaksi) secara detail.
+*   **Manajemen User & Transaksi**: Lihat status transaksi dan daftar pengguna.
 
 ## 📋 Prasyarat (Prerequisites)
 
-Sebelum memulai, pastikan Anda telah menginstal:
-*   **Node.js** (v16 atau lebih baru)
+*   **Node.js** (v18+)
 *   **PostgreSQL** (Database)
-*   Account & API Keys dari [Midtrans](https://midtrans.com/) (Sandbox/Production)
-*   Account & API Keys dari [Apigames](https://apigames.id/)
+*   **Midtrans Account** (Payment Gateway)
+*   **Apigames Account** (Provider Topup)
 
-## 🚀 Cara Menjalankan (Step-by-Step)
+## 🚀 Cara Menjalankan (Installation)
 
-### 1. Setup Database
-1.  Buka terminal atau tool database Anda (pgAdmin/DBeaver).
-2.  Buat database baru dengan nama `avalon`:
-    ```sql
-    CREATE DATABASE avalon;
-    ```
-    *(Tabel akan otomatis dibuat saat backend dijalankan pertama kali)*
-
----
-
-### 2. Konfigurasi Backend (Server)
-
-1.  Masuk ke folder backend:
-    ```bash
-    cd backend
-    ```
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  Buat file `.env` di dalam folder `backend` dan isi konfigurasi berikut:
-    ```properties
-    PORT=5000
-    
-    # Database Config
-    DB_HOST=localhost
-    DB_PORT=5432
-    DB_USER=postgres
-    DB_PASSWORD=root  # Sesuaikan dengan password database local Anda
-    DB_NAME=avalon
-    
-    # Keamanan
-    JWT_SECRET=rahasia_super_aman_123
-
-    # Apigames (Provider)
-    APIGAMES_MERCHANT_ID=M2xxxxxxxxx
-    APIGAMES_SECRET_KEY=xxxxxxxxxxxxxxxxxxxxxxxx
-
-    # Midtrans (Payment Gateway)
-    # Gunakan kunci SANDBOX untuk testing awal
-    MIDTRANS_SERVER_KEY=SB-Mid-server-xxxx
-    MIDTRANS_CLIENT_KEY=SB-Mid-client-xxxx
-    MIDTRANS_IS_PRODUCTION=false  # Set 'true' jika sudah siap live
-    ```
+### 1. Setup Backend
+1.  Masuk ke folder backend: `cd backend`
+2.  Install dependencies: `npm install`
+3.  Buat file `.env` di dalam folder `backend` (lihat contoh di bawah).
 4.  Jalankan server:
     ```bash
     node server.js
     ```
-    *Jika sukses, akan muncul pesan `Server is running on port 5000` dan `Synced db`.*
+    *(Database akan otomatis tersinkronisasi dan Admin default akan dibuat)*
 
----
-
-### 3. Konfigurasi Frontend (Web)
-
-1.  Buka terminal baru (biarkan terminal backend tetap jalan).
-2.  Masuk ke folder root project (jika dari folder backend, `cd ..`).
-3.  Install dependencies:
-    ```bash
-    npm install
-    ```
-4.  Jalankan website:
+### 2. Setup Frontend
+1.  Buka terminal baru di root project.
+2.  Install dependencies: `npm install`
+3.  Jalankan mode development:
     ```bash
     npm run dev
     ```
-5.  Buka browser di `http://localhost:5173`.
+4.  Buka browser di: `http://localhost:3000` (atau port yang dimunculkan terminal).
 
-## 🛠️ Fitur & Cara Testing
+---
 
-### 1. Cek Username (Validasi ID)
-*   Saat user memasukkan ID Game (misal Mobile Legends), klik tombol **CEK**.
-*   Backend akan menghubungi Apigames untuk memastikan ID valid dan menampilkan Nickname user.
+## ⚙️ Konfigurasi .env (Backend)
 
-### 2. Pembayaran (Midtrans Snap)
-*   Pilih item, klik **Beli**.
-*   Akan muncul popup pembayaran.
-*   **Mode Sandbox**: Pilih metode pembayaran simulator (contoh: BCA Virtual Account), lalu bayar lewat simulator Midtrans.
+Pastikan file `.env` di folder `backend/` memiliki konfigurasi ini:
 
-### 3. Top Up Otomatis
-*   Setelah pembayaran sukses (`Settlement`), backend otomatis mengirim request ke Apigames.
-*   Apigames akan memproses kirim Diamond ke akun user secara real-time.
+```properties
+PORT=5000
 
-## ⚠️ Troubleshooting Umum
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=yourpassword
+DB_NAME=avalon
 
-*   **Error "Merchant not found" (Midtrans)**:
-    *   Pastikan Client Key & Server Key di `.env` sesuai dengan environment (Sandbox vs Production).
-    *   Jangan lupa restart backend (`Ctrl+C` lalu `node server.js`) setiap ada perubahan di `.env`.
+# Security
+JWT_SECRET=your_super_secret_key
 
-*   **Error "Signature not valid" (Apigames)**:
-    *   Request transaksi ke Apigames menggunakan method `GET` query params dengan rumus signature `MD5(merchant_id:secret_key:ref_id)`. Logic ini sudah ditangani di `provider.service.js`.
+# Third Party Services
+APIGAMES_MERCHANT_ID=M2xxxx
+APIGAMES_SECRET_KEY=xxxxxx
 
-*   **Database Error**:
-    *   Pastikan PostgreSQL service sedang berjalan dan username/password di `.env` benar.
+MIDTRANS_SERVER_KEY=SB-Mid-server-xxxx
+MIDTRANS_CLIENT_KEY=SB-Mid-client-xxxx
+MIDTRANS_IS_PRODUCTION=false
+
+# Email Service (Nodemailer)
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+```
+
+## 🔑 Akun Default (Seeder)
+
+Saat backend pertama kali dijalankan, sistem akan membuat akun Admin otomatis:
+*   **Username**: `admin`
+*   **Password**: `admin123`
+*   **Role**: `Admin`
+
+Gunakan akun ini untuk mengakses Dashboard Admin di `/admin`.
 
 ## 📂 Struktur Project
 
-*   `/backend` - Server API, logika Transaksi, Payment, dan Provider.
-*   `/src` & `pages` - Halaman Frontend React.
-*   `/services` - Frontend services (API calls).
+*   `/pages` - Halaman React (Landing, Admin, Login, dll).
+*   `/backend/models` - Schema Database (User, Game, Transaction, Voucher, Banner, Log, Stats).
+*   `/backend/controllers` - Logika bisnis API.
+*   `/services` - Frontend Service untuk komunikasi ke API.
+
+## 📱 Mobile Support
+Website ini sudah mendukung **Responsive Design**.
+*   Menu navigasi otomatis berubah menjadi **Hamburger Menu** di layar kecil.
+*   Grid game menyesuaikan ukuran layar (2 kolom di HP, 5 kolom di Desktop).
 
 ---
-*Dibuat oleh Tim Development Avalon Games Platform.*
+*Powered by Avalon Ecosystem. Developed by RizkiADP.*
