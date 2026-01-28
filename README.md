@@ -103,5 +103,9 @@ Website ini sudah mendukung **Responsive Design**.
 *   Menu navigasi otomatis berubah menjadi **Hamburger Menu** di layar kecil.
 *   Grid game menyesuaikan ukuran layar (2 kolom di HP, 5 kolom di Desktop).
 
+
+##Preview
+![Avalon Games Preview](https://i.ibb.co/B273Y6ZS/DEMO.jpg)
+
 ---
 *Powered by Avalon Ecosystem. Developed by RizkiADP.*
