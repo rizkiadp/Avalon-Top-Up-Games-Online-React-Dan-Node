@@ -38,10 +38,7 @@ export const History: React.FC = () => {
         </div>
         {user && (
           <div className="flex items-center gap-4 glass-panel px-6 py-3 rounded-2xl border border-white/10">
-            <div className="text-right">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none mb-1">Available Credits</p>
-              <p className="text-xl font-bold text-primary">Rp {user.credits.toLocaleString()}</p>
-            </div>
+            {/* Credits Removed */}
             <button className="bg-primary/20 text-primary p-2 rounded-lg hover:bg-primary hover:text-black transition-all">
               <span className="material-symbols-outlined">add</span>
             </button>
@@ -93,9 +90,9 @@ export const History: React.FC = () => {
                   {txn.status}
                 </span>
               </div>
-              <button className="size-10 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-black transition-all">
+              <Link to={`/transaction/${txn.id}`} className="size-10 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-black transition-all">
                 <span className="material-symbols-outlined">receipt_long</span>
-              </button>
+              </Link>
             </div>
           ))
         )}

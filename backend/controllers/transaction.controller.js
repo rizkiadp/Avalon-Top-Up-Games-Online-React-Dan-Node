@@ -3,6 +3,7 @@ const Transaction = db.transactions;
 const Op = db.Sequelize.Op;
 const PaymentService = require('../services/payment.service');
 const ProviderService = require('../services/provider.service');
+const { logAction } = require('../services/logger');
 
 // Create and Save a new Transaction
 exports.create = async (req, res) => {
@@ -12,25 +13,53 @@ exports.create = async (req, res) => {
     }
 
     try {
-        // 1. Create a Transaction in DB
+        let finalPrice = req.body.price;
+        let finalAmount = req.body.amount;
+        let appliedVoucher = null;
+
+        // 1. Check Voucher if provided
+        if (req.body.voucherCode) {
+            const voucher = await db.vouchers.findOne({ where: { code: req.body.voucherCode } });
+            if (voucher) {
+                // Verify Validity
+                const isValid = (!voucher.gameId || voucher.gameId == req.body.gameId) &&
+                    (voucher.currentUsage < voucher.maxUsage) &&
+                    (!voucher.expiresAt || new Date(voucher.expiresAt) > new Date());
+
+                if (isValid) {
+                    const discount = Math.floor(finalPrice * (voucher.discountPercent / 100));
+                    finalPrice = finalPrice - discount;
+                    finalAmount = `Rp ${finalPrice.toLocaleString()}`;
+                    appliedVoucher = voucher;
+                }
+            }
+        }
+
+        // 2. Create a Transaction in DB
         const transactionData = {
             id: `TXN-${Math.floor(Math.random() * 1000000)}`,
             gameId: req.body.gameId,
             gameName: req.body.gameName,
             item: req.body.item,
-            amount: req.body.amount,
-            price: req.body.price,
+            amount: finalAmount, // Updated amount string
+            price: finalPrice,   // Updated price number
             status: "Pending",
             userId: req.body.userId,
-            userGameId: req.body.userGameId
+            userGameId: req.body.userGameId,
+            voucherCode: req.body.voucherCode // Optional: Store code in transaction if desired, current schema might not have it, but useful for logs
         };
 
         const transaction = await Transaction.create(transactionData);
 
-        // 2. Request Midtrans Snap Token
+        // 3. Increment Voucher Usage
+        if (appliedVoucher) {
+            await appliedVoucher.increment('currentUsage');
+        }
+
+        // 4. Request Midtrans Snap Token
         const paymentInfo = await PaymentService.createPayment(transaction);
 
-        // 3. For Demo/Dev: Polling simulation (in prod use Webhooks)
+        // 5. For Demo/Dev: Polling simulation (in prod use Webhooks)
         // We start a polling loop to check if user paid
         pollPaymentStatus(transaction.id);
 
@@ -38,6 +67,8 @@ exports.create = async (req, res) => {
             ...transaction.toJSON(),
             payment: paymentInfo
         });
+
+        await logAction(req.body.userId, "user" + req.body.userId, "CREATE_TRANSACTION", `Created transaction ${transaction.id} for ${transaction.item} (Price: ${finalPrice})`, req);
 
     } catch (err) {
         res.status(500).send({
@@ -73,6 +104,7 @@ const pollPaymentStatus = async (transactionId) => {
                 transaction.status = 'Processing';
                 await transaction.save();
                 console.log(`[System] Payment RECEIVED for ${transactionId}.`);
+                await logAction(transaction.userId, "system", "PAYMENT_RECEIVED", `Payment received for ${transactionId}`);
 
                 // Trigger Provider (Apigames)
                 try {
@@ -81,11 +113,13 @@ const pollPaymentStatus = async (transactionId) => {
                         transaction.status = 'Success';
                         await transaction.save();
                         console.log(`[System] Transaction ${transactionId} SUCCESS.`);
+                        await logAction(transaction.userId, "system", "TRANSACTION_SUCCESS", `Topup success for ${transactionId}`);
                     }
                 } catch (provErr) {
                     transaction.status = 'Failed';
                     await transaction.save();
                     console.error(`[System] Provider Failed:`, provErr);
+                    await logAction(transaction.userId, "system", "TRANSACTION_FAILED", `Provider failed for ${transactionId}: ${provErr.message}`);
                 }
             }
         } catch (error) {
@@ -173,4 +207,29 @@ exports.findOne = (req, res) => {
             else res.status(404).send({ message: `Cannot find Transaction with id=${id}.` });
         })
         .catch(err => res.status(500).send({ message: "Error retrieving Transaction with id=" + id }));
+};
+
+// Delete a Transaction with the specified id in the request
+exports.delete = (req, res) => {
+    const id = req.params.id;
+
+    Transaction.destroy({
+        where: { id: id }
+    })
+        .then(num => {
+            if (num == 1) {
+                res.send({
+                    message: "Transaction was deleted successfully!"
+                });
+            } else {
+                res.send({
+                    message: `Cannot delete Transaction with id=${id}. Maybe Transaction was not found!`
+                });
+            }
+        })
+        .catch(err => {
+            res.status(500).send({
+                message: "Could not delete Transaction with id=" + id
+            });
+        });
 };

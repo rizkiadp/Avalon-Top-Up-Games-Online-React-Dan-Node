@@ -20,9 +20,17 @@ app.get('/', (req, res) => {
 });
 
 // Routes
+// Routes
 require('./routes/transaction.routes')(app);
 require('./routes/game.routes')(app);
 require('./routes/auth.routes')(app);
+require('./routes/log.routes')(app);
+require('./routes/voucher.routes')(app);
+require('./routes/banner.routes')(app);
+
+const analyticsRoutes = require('./routes/analytics.routes');
+app.use('/api/analytics', analyticsRoutes);
+
 
 const seed = require('./seeders/init');
 

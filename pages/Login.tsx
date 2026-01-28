@@ -46,7 +46,7 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center px-6 transition-colors duration-500 ${isAdminMode ? 'bg-red-950/20' : 'bg-background-dark'} cyber-grid relative overflow-hidden`}>
+    <div className={`min-h-screen flex items-center justify-center px-6 pt-32 pb-12 transition-colors duration-500 ${isAdminMode ? 'bg-red-950/20' : 'bg-background-dark'} cyber-grid relative overflow-hidden`}>
       {/* Background Decor */}
       <div className={`absolute top-1/4 left-1/4 size-[500px] blur-[120px] rounded-full animate-pulse transition-colors duration-500 ${isAdminMode ? 'bg-red-600/10' : 'bg-primary/10'}`}></div>
       <div className={`absolute bottom-1/4 right-1/4 size-[500px] blur-[120px] rounded-full animate-pulse [animation-delay:2s] transition-colors duration-500 ${isAdminMode ? 'bg-orange-600/10' : 'bg-secondary/10'}`}></div>
@@ -60,38 +60,38 @@ export const Login: React.FC = () => {
               </span>
             </div>
             <h1 className="text-3xl font-bold tracking-tighter uppercase">
-              {isAdminMode ? 'Root Access' : 'Access Terminal'}
+              {isAdminMode ? 'Admin Access' : 'Login Member Avalon'}
             </h1>
             <p className={`text-sm mt-2 uppercase tracking-[0.3em] font-mono transition-colors duration-500 ${isAdminMode ? 'text-red-400' : 'text-slate-500'}`}>
-              {isAdminMode ? 'Level 4 Clearance Required' : 'Initialize Security Protocol'}
+              {isAdminMode ? 'AVALONGAMES ADMIN LOGIN' : 'AVALONGAMES TOP UP PENYEDIA LAYANAN PERMAINAN TERBESAR'}
             </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Username / Alias</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Username</label>
               <div className="relative">
                 <span className={`absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[20px] transition-colors ${isAdminMode ? 'text-red-500' : 'text-slate-500'}`}>person</span>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className={`w-full bg-background-dark/50 border rounded-xl pl-12 pr-4 py-4 text-white focus:outline-none transition-all font-body ${isAdminMode ? 'border-red-500/50 focus:border-red-400' : 'border-white/10 focus:border-primary'}`}
-                  placeholder="Enter credentials..."
+                  className={`w-full bg-surface-accent border rounded-xl pl-12 pr-4 py-4 text-main focus:outline-none transition-all font-body ${isAdminMode ? 'border-red-500/50 focus:border-red-400' : 'border-white/10 focus:border-primary'}`}
+                  placeholder="Username"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Access Code</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Password</label>
               <div className="relative">
                 <span className={`absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[20px] transition-colors ${isAdminMode ? 'text-red-500' : 'text-slate-500'}`}>key</span>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`w-full bg-background-dark/50 border rounded-xl pl-12 pr-4 py-4 text-white focus:outline-none transition-all font-body ${isAdminMode ? 'border-red-500/50 focus:border-red-400' : 'border-white/10 focus:border-primary'}`}
+                  className={`w-full bg-surface-accent border rounded-xl pl-12 pr-4 py-4 text-main focus:outline-none transition-all font-body ${isAdminMode ? 'border-red-500/50 focus:border-red-400' : 'border-white/10 focus:border-primary'}`}
                   placeholder="••••••••"
                   required
                 />
@@ -118,7 +118,7 @@ export const Login: React.FC = () => {
           </form>
 
           <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4 text-center">
-            <p className="text-xs text-slate-500">New operator? <Link to="/register" className="text-primary hover:underline">Register Sub-Protocol</Link></p>
+            <p className="text-xs text-slate-500">Pengguna baru? <Link to="/register" className="text-primary hover:underline">Daftar Disini!</Link></p>
             <button className="text-[10px] text-slate-600 font-mono hover:text-white transition-colors uppercase tracking-widest" type="button">Emergency Data Recovery</button>
           </div>
         </div>

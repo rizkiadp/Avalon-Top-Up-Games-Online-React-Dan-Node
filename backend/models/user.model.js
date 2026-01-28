@@ -24,6 +24,16 @@ module.exports = (sequelize, Sequelize) => {
         vipLevel: {
             type: Sequelize.STRING,
             defaultValue: 'Bronze'
+        },
+        otp: {
+            type: Sequelize.STRING
+        },
+        otpExpires: {
+            type: Sequelize.DATE
+        },
+        isVerified: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false
         }
     });
 

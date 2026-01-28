@@ -1,6 +1,6 @@
 import { Game, Transaction, User, Denomination, PaymentMethod } from '../types';
 
-const API_URL = '/api';
+const API_URL = 'http://localhost:5000/api';
 
 export const db = {
   // Games
@@ -39,9 +39,43 @@ export const db = {
     return res.json();
   },
 
-  // Auth (Mock for now, or could be real)
+  // Banners
+  getBanners: async (activeOnly: boolean = false): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/banners${activeOnly ? '?active=true' : ''}`);
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  createBanner: async (banner: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/banners`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(banner)
+    });
+    if (!res.ok) throw new Error('Failed to create banner');
+    return res.json();
+  },
+
+  updateBanner: async (id: number, data: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/banners/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Failed to update banner');
+    return res.json();
+  },
+
+  deleteBanner: async (id: number): Promise<any> => {
+    const res = await fetch(`${API_URL}/banners/${id}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Failed to delete banner');
+    return res.json();
+  },
+
+  // Auth (Legacy/Mock - partially replaced by backend)
   login: (username: string): User => {
-    // Keep local mock for auth simplicity per now, or move to backend if needed suited
     const isAdmin = username.toLowerCase() === 'admin';
     const user: User = {
       id: isAdmin ? 'ADMIN_01' : `USER_${Math.floor(Math.random() * 1000)}`,
@@ -61,6 +95,45 @@ export const db = {
     localStorage.removeItem('avalon_session');
   },
 
+  changePassword: async (userId: string, oldPassword: string, newPassword: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/auth/change-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, oldPassword, newPassword })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Failed to change password');
+    }
+    return res.json();
+  },
+
+  changeEmail: async (userId: string, password: string, newEmail: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/auth/change-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, password, newEmail })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Failed to update email');
+    }
+    return res.json();
+  },
+
+  verifyEmail: async (email: string, otp: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/auth/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Verification failed');
+    }
+    return res.json();
+  },
+
   getCurrentUser: (): User | null => {
     try {
       const data = localStorage.getItem('avalon_session');
@@ -71,6 +144,50 @@ export const db = {
       return null;
     }
   },
+
+  // Logs
+  getLogs: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/logs`);
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  // Vouchers
+  createVoucher: async (voucher: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/vouchers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(voucher)
+    });
+    if (!res.ok) throw new Error('Failed to create voucher');
+    return res.json();
+  },
+
+  getVouchers: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/vouchers`);
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  deleteVoucher: async (id: number): Promise<any> => {
+    const res = await fetch(`${API_URL}/vouchers/${id}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Failed to delete voucher');
+    return res.json();
+  },
+
+  verifyVoucher: async (code: string, gameId?: string | number): Promise<any> => {
+    const res = await fetch(`${API_URL}/vouchers/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, gameId })
+    });
+    // Return the handle logic in component (valid: true/false)
+    return res.json();
+  },
+
+
 
   // Static Data
   getDenominations: (): Denomination[] => [

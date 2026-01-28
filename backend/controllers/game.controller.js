@@ -2,6 +2,7 @@ const db = require("../models");
 const Game = db.games;
 const Op = db.Sequelize.Op;
 const ProviderService = require('../services/provider.service');
+const { logAction } = require('../services/logger');
 
 // Retrieve all Games from the database.
 exports.findAll = (req, res) => {
@@ -155,7 +156,8 @@ exports.addItem = (req, res) => {
     const Item = require("../models").items;
 
     Item.create(item)
-        .then(data => {
+        .then(async data => {
+            await logAction(1, "admin", "ADD_ITEM", `Added item ${item.name} to game ${gameId}`, req);
             res.send(data);
         })
         .catch(err => {
@@ -165,13 +167,37 @@ exports.addItem = (req, res) => {
         });
 };
 
+
+exports.updateItem = (req, res) => {
+    const id = req.params.itemId;
+    const Item = require("../models").items;
+
+    Item.update(req.body, {
+        where: { id: id }
+    })
+        .then(async num => {
+            if (num == 1) {
+                await logAction(1, "admin", "UPDATE_ITEM", `Updated item ${id}`, req);
+                res.send({ message: "Item updated successfully." });
+            } else {
+                res.send({ message: `Cannot update Item with id=${id}. Maybe Item was not found or req.body is empty!` });
+            }
+        })
+        .catch(err => {
+            res.status(500).send({ message: "Error updating Item with id=" + id });
+        });
+};
+
 exports.deleteItem = (req, res) => {
     const id = req.params.itemId;
     const Item = require("../models").items;
 
     Item.destroy({ where: { id: id } })
-        .then(num => {
-            if (num == 1) res.send({ message: "Item deleted." });
+        .then(async num => {
+            if (num == 1) {
+                await logAction(1, "admin", "DELETE_ITEM", `Deleted item ${id}`, req);
+                res.send({ message: "Item deleted." });
+            }
             else res.send({ message: "Cannot delete Item." });
         })
         .catch(err => res.status(500).send({ message: "Error deleting Item." }));

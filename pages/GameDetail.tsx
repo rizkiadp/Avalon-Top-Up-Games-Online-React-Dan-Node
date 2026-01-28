@@ -19,6 +19,28 @@ export const GameDetail: React.FC = () => {
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Voucher State
+  const [voucherCode, setVoucherCode] = useState('');
+  const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
+
+  const handleVerifyVoucher = async () => {
+    if (!voucherCode) return;
+    try {
+      const res = await db.verifyVoucher(voucherCode, game.id); // Verify against specific game
+      if (res.valid) {
+        setAppliedVoucher(res.voucher);
+        alert(`Voucher Applied: ${res.voucher.discountPercent}% OFF!`);
+      } else {
+        alert(res.message || "Voucher Invalid/Expired");
+        setAppliedVoucher(null);
+      }
+    } catch (e: any) {
+      console.error(e);
+      alert(`Error verifying voucher: ${e.message || JSON.stringify(e)}`);
+    }
+  };
+
+
   useEffect(() => {
     window.scrollTo(0, 0);
     if (id) {
@@ -51,6 +73,7 @@ export const GameDetail: React.FC = () => {
         price: selectedDenom.price,
         userId: user.id,
         userGameId: zoneId ? `${userId} (${zoneId})` : userId,
+        voucherCode: appliedVoucher ? appliedVoucher.code : null, // Add voucher code
       };
 
       const result = await db.addTransaction(newTxn);
@@ -106,7 +129,7 @@ export const GameDetail: React.FC = () => {
             <div className="size-10 rounded-full bg-primary text-background-dark flex items-center justify-center font-bold">1</div>
             <h2 className="text-xl font-bold uppercase tracking-wider">Data Akun</h2>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className={`grid ${game.id === 'mlbb' ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
             <div className="space-y-2">
               <div className="flex justify-between">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">User ID</label>
@@ -118,7 +141,19 @@ export const GameDetail: React.FC = () => {
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
                   placeholder="Masukkan ID"
-                  className="w-full bg-background-dark/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary focus:outline-none transition-all"
+                  className="w-full bg-surface-accent border border-white/10 rounded-xl px-4 py-3 text-main focus:border-primary focus:outline-none transition-all"
+                />
+              </div>
+            </div>
+            {game.id === 'mlbb' && (
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Zone ID</label>
+                <input
+                  type="text"
+                  value={zoneId}
+                  onChange={(e) => setZoneId(e.target.value)}
+                  placeholder="1234"
+                  className="w-full bg-surface-accent border border-white/10 rounded-xl px-4 py-3 text-main focus:border-primary focus:outline-none transition-all"
                 />
                 <button
                   onClick={async () => {
@@ -141,17 +176,7 @@ export const GameDetail: React.FC = () => {
                   {isChecking ? '...' : 'CEK'}
                 </button>
               </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Zone ID</label>
-              <input
-                type="text"
-                value={zoneId}
-                onChange={(e) => setZoneId(e.target.value)}
-                placeholder="1234"
-                className="w-full bg-background-dark/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary focus:outline-none transition-all"
-              />
-            </div>
+            )}
           </div>
         </section>
 
@@ -225,14 +250,61 @@ export const GameDetail: React.FC = () => {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-6 relative z-10">
             <div>
               <p className="text-slate-400 text-sm">Total Pembayaran</p>
-              <h3 className="text-3xl font-bold text-primary">
-                {selectedDenom ? `Rp ${selectedDenom.price.toLocaleString()}` : 'Rp 0'}
-              </h3>
+              <div className="flex flex-col">
+                {appliedVoucher ? (
+                  <>
+                    <span className="text-sm text-slate-500 line-through">
+                      {selectedDenom ? `Rp ${selectedDenom.price.toLocaleString()}` : 'Rp 0'}
+                    </span>
+                    <h3 className="text-2xl font-bold text-green-400">
+                      {selectedDenom ? `Rp ${Math.floor(selectedDenom.price * (1 - appliedVoucher.discountPercent / 100)).toLocaleString()}` : 'Rp 0'}
+                    </h3>
+                    <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">
+                      {appliedVoucher.code} APPLIED (-{appliedVoucher.discountPercent}%)
+                    </span>
+                  </>
+                ) : (
+                  <h3 className="text-2xl font-bold text-primary">
+                    {selectedDenom ? `Rp ${selectedDenom.price.toLocaleString()}` : 'Rp 0'}
+                  </h3>
+                )}
+              </div>
+            </div>
+
+            {/* Voucher Input Desktop */}
+            <div className="flex gap-2 items-center mr-auto sm:mr-0 sm:ml-auto w-full sm:w-auto max-w-xs">
+              <div className="relative w-full">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-500 text-sm">confirmation_number</span>
+                <input
+                  type="text"
+                  value={voucherCode}
+                  onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                  placeholder="Kode Voucher"
+                  disabled={!!appliedVoucher}
+                  className="w-full bg-surface-dark border border-white/10 rounded-xl pl-9 pr-2 py-2 text-sm focus:border-primary focus:outline-none uppercase font-mono"
+                />
+              </div>
+              {appliedVoucher ? (
+                <button
+                  onClick={() => { setAppliedVoucher(null); setVoucherCode(''); }}
+                  className="bg-red-500/10 text-red-500 p-2 rounded-xl hover:bg-red-500 hover:text-white transition-all"
+                >
+                  <span className="material-symbols-outlined text-lg">close</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleVerifyVoucher}
+                  disabled={!voucherCode}
+                  className="bg-secondary/10 text-secondary border border-secondary/20 px-3 py-2 rounded-xl text-xs font-bold hover:bg-secondary hover:text-white transition-all disabled:opacity-50"
+                >
+                  USE
+                </button>
+              )}
             </div>
             <button
               onClick={handlePurchase}
               disabled={isProcessing}
-              className={`w-full sm:w-auto bg-gradient-to-r from-primary to-secondary text-background-dark px-12 py-4 rounded-xl font-bold text-lg shadow-neon hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-3 ${selectedDenom && selectedPayment ? 'animate-pulse' : ''}`}
+              className={`w-full sm:w-auto bg-gradient-to-r from-primary to-secondary text-background-dark px-8 py-3 rounded-xl font-bold text-base shadow-neon hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-3 ${selectedDenom && selectedPayment ? 'animate-pulse' : ''}`}
             >
               {isProcessing ? (
                 <>
@@ -255,14 +327,14 @@ export const GameDetail: React.FC = () => {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[50] glass-panel border-t border-white/10 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] flex items-center justify-between gap-4 animate-in slide-in-from-bottom-full">
         <div className="flex flex-col">
           <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Total Harga</p>
-          <p className="text-xl font-bold text-primary">
+          <p className="text-lg font-bold text-primary">
             {selectedDenom ? `Rp ${selectedDenom.price.toLocaleString()}` : 'Rp 0'}
           </p>
         </div>
         <button
           onClick={handlePurchase}
           disabled={isProcessing}
-          className={`flex-1 bg-gradient-to-r from-primary to-secondary text-background-dark py-3 rounded-xl font-bold text-sm shadow-neon flex items-center justify-center gap-2 active:scale-95 transition-all ${selectedDenom && selectedPayment && !isProcessing ? 'ring-2 ring-white/50 animate-pulse' : 'opacity-50'}`}
+          className={`flex-1 bg-gradient-to-r from-primary to-secondary text-background-dark py-2 rounded-xl font-bold text-sm shadow-neon flex items-center justify-center gap-2 active:scale-95 transition-all ${selectedDenom && selectedPayment && !isProcessing ? 'ring-2 ring-white/50 animate-pulse' : 'opacity-50'}`}
         >
           {isProcessing ? (
             <span className="size-4 border-2 border-background-dark border-t-transparent rounded-full animate-spin"></span>

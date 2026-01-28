@@ -18,5 +18,8 @@ module.exports = app => {
     // Retrieve a single Transaction with id
     router.get("/:id", transactions.findOne);
 
+    // Delete a Transaction with id
+    router.delete("/:id", transactions.delete);
+
     app.use('/api/transactions', router);
 };

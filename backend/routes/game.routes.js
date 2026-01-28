@@ -23,6 +23,7 @@ module.exports = app => {
 
     // Items
     router.post("/:gameId/items", games.addItem);
+    router.put("/items/:itemId", games.updateItem);
     router.delete("/items/:itemId", games.deleteItem);
 
     // Check Account Logic

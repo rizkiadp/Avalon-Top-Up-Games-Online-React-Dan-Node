@@ -28,7 +28,7 @@ export const AIChat: React.FC = () => {
 
     const botResponse = await geminiService.getChatResponse(messages, input);
     const botMsg = { role: 'model' as const, parts: [{ text: botResponse }] };
-    
+
     setIsTyping(false);
     setMessages(prev => [...prev, botMsg]);
   };
@@ -36,7 +36,7 @@ export const AIChat: React.FC = () => {
   return (
     <div className="fixed bottom-6 right-6 z-[60]">
       {!isOpen && (
-        <button 
+        <button
           onClick={() => setIsOpen(true)}
           className="bg-primary hover:bg-primary-dark text-background-dark p-4 rounded-full shadow-neon transition-all hover:scale-110 flex items-center justify-center"
         >
@@ -72,11 +72,10 @@ export const AIChat: React.FC = () => {
             )}
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-3 rounded-lg text-sm ${
-                  msg.role === 'user' 
-                    ? 'bg-primary/20 text-white border border-primary/30 rounded-tr-none' 
+                <div className={`max-w-[85%] p-3 rounded-lg text-sm ${msg.role === 'user'
+                    ? 'bg-primary/20 text-white border border-primary/30 rounded-tr-none'
                     : 'bg-surface-accent text-slate-200 border border-white/5 rounded-tl-none'
-                }`}>
+                  }`}>
                   {msg.parts[0].text}
                 </div>
               </div>
@@ -96,15 +95,15 @@ export const AIChat: React.FC = () => {
           </div>
 
           <div className="p-4 bg-surface-dark border-t border-white/10 flex gap-2">
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Send a transmission..."
-              className="flex-1 bg-[#0b1215] border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-primary transition-all font-mono"
+              className="flex-1 bg-surface-accent border border-dark rounded-lg px-4 py-2 text-sm text-main focus:outline-none focus:border-primary transition-all font-mono"
             />
-            <button 
+            <button
               onClick={handleSend}
               className="bg-primary hover:bg-primary-dark text-background-dark p-2 rounded-lg shadow-neon transition-all"
             >

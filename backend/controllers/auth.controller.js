@@ -1,8 +1,11 @@
 const db = require("../models");
+const { logAction } = require("../services/logger");
 const User = db.users;
 // Config removed as we are using mock tokens for now
 // For this specific request "username admin password admin", we will do a simple check.
 // In a real app we'd use bcrypt and JWT.
+
+const { sendOTP } = require("../services/email.service");
 
 exports.signin = async (req, res) => {
     try {
@@ -12,21 +15,7 @@ exports.signin = async (req, res) => {
             return res.status(400).send({ message: "Username and password are required." });
         }
 
-        // Check for specific admin credentials as requested
-        if (username === "admin" && password === "admin") {
-            return res.status(200).send({
-                id: 1, // continuous id
-                username: "admin",
-                email: "admin@avalon.com",
-                role: "Admin",
-                credits: 999999999,
-                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
-                vipLevel: "God Mode",
-                accessToken: "mock-token-admin-12345" // Mock token
-            });
-        }
-
-        // For other users, we would check DB
+        // Check DB for user (including Admin)
         const user = await User.findOne({
             where: {
                 username: username
@@ -42,9 +31,19 @@ exports.signin = async (req, res) => {
         var passwordIsValid = (user.password === password);
 
         if (!passwordIsValid) {
+            await logAction(user.id, user.username, "LOGIN_FAILED", "Invalid password attempt", req);
             return res.status(401).send({
                 accessToken: null,
                 message: "Invalid Password!"
+            });
+        }
+
+        // Check if verified
+        if (user.role !== 'Admin' && !user.isVerified) {
+            return res.status(401).send({
+                message: "Email not verified. Please verify your email first.",
+                needsVerification: true,
+                email: user.email
             });
         }
 
@@ -60,6 +59,8 @@ exports.signin = async (req, res) => {
             vipLevel: user.vipLevel,
             accessToken: token
         });
+
+        await logAction(user.id, user.username, "LOGIN", "User logged in successfully", req);
 
     } catch (error) {
         res.status(500).send({ message: error.message });
@@ -82,22 +83,217 @@ exports.signup = async (req, res) => {
         });
 
         if (existingUser) {
+            if (!existingUser.isVerified) {
+                // User exists but not verified. Treat as a retry.
+                // Update password (in case they forgot what they typed)
+                existingUser.password = password;
+
+                // Generate new OTP
+                const otp = Math.floor(100000 + Math.random() * 900000).toString();
+                const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+                existingUser.otp = otp;
+                existingUser.otpExpires = otpExpires;
+
+                await existingUser.save();
+                await sendOTP(email, otp);
+
+                return res.send({
+                    message: "Registration successful! Please verify your email.",
+                    email: email,
+                    needsVerification: true
+                });
+            }
             return res.status(400).send({ message: "Username already in use!" });
         }
+
+        // Generate OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
         // Create User
         await User.create({
             username: username,
             email: email,
-            password: password, // Plain text for now as per current setup
+            password: password, // Plain text for now
             role: "User",
             credits: 0,
             rank: 1,
             avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=" + username,
-            vipLevel: "Bronze"
+            vipLevel: "Bronze",
+            otp: otp,
+            otpExpires: otpExpires,
+            isVerified: false
         });
 
-        res.send({ message: "User registered successfully!" });
+        // Send OTP
+        const emailSent = await sendOTP(email, otp);
+
+        await logAction(null, username, "REGISTER_INIT", `New user registered, waiting verification: ${email}`, req);
+
+        res.send({
+            message: "Registration successful! Please verify your email.",
+            email: email,
+            needsVerification: true
+        });
+
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
+
+exports.verify = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        const user = await User.findOne({ where: { email: email } });
+
+        if (!user) {
+            return res.status(404).send({ message: "User not found." });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).send({ message: "User already verified." });
+        }
+
+        if (user.otp !== otp || user.otpExpires < new Date()) {
+            return res.status(400).send({ message: "Invalid or expired OTP." });
+        }
+
+        // Update user
+        user.isVerified = true;
+        user.otp = null;
+        user.otpExpires = null;
+        await user.save();
+
+        await logAction(user.id, user.username, "VERIFIED", "Email verified successfully", req);
+
+        // Auto login after verify? Or just return success
+        // Returning success so frontend can redirect to login or auto-login
+        var token = "mock-token-" + user.id;
+
+        res.send({
+            message: "Email verified successfully!",
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                credits: user.credits,
+                avatar: user.avatar,
+                vipLevel: user.vipLevel,
+                accessToken: token
+            }
+        });
+
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
+
+exports.resendOTP = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ where: { email: email } });
+
+        if (!user) {
+            return res.status(404).send({ message: "User not found." });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).send({ message: "User already verified." });
+        }
+
+        // Generate OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        user.otp = otp;
+        user.otpExpires = otpExpires;
+        await user.save();
+
+        await sendOTP(email, otp);
+
+        res.send({ message: "OTP resent successfully." });
+
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
+exports.changePassword = async (req, res) => {
+    try {
+        const { userId, oldPassword, newPassword } = req.body;
+
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return res.status(404).send({ message: "User not found." });
+        }
+
+        // Verify old password (simple check as per current impl, normally bcrypt)
+        if (user.password !== oldPassword) {
+            await logAction(userId, user.username, "PASSWORD_CHANGE_FAILED", "Invalid old password", req);
+            return res.status(400).send({ message: "Invalid old password." });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        await logAction(userId, user.username, "PASSWORD_CHANGED", "Password updated successfully", req);
+
+        res.send({ message: "Password updated successfully!" });
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
+};
+
+exports.changeEmail = async (req, res) => {
+    try {
+        const { userId, password, newEmail } = req.body;
+
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return res.status(404).send({ message: "User not found." });
+        }
+
+        // Verify password
+        if (user.password !== password) {
+            await logAction(userId, user.username, "EMAIL_CHANGE_FAILED", "Invalid password", req);
+            return res.status(400).send({ message: "Invalid password." });
+        }
+
+        // Check if new email is taken
+        const existingUser = await User.findOne({ where: { email: newEmail } });
+        if (existingUser) {
+            return res.status(400).send({ message: "Email already in use." });
+        }
+
+        // Generate OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+        // Update user: temp set email but unverified? 
+        // Standard flow: 
+        // 1. Update email
+        // 2. Set isVerified = false
+        // 3. Send OTP
+
+        const oldEmail = user.email;
+        user.email = newEmail;
+        user.isVerified = false;
+        user.otp = otp;
+        user.otpExpires = otpExpires;
+
+        await user.save();
+        await sendOTP(newEmail, otp);
+
+        await logAction(userId, user.username, "EMAIL_CHANGED", `Email changed from ${oldEmail} to ${newEmail}. Verification required.`, req);
+
+        res.send({
+            message: "Email updated! Verification OTP sent.",
+            email: newEmail,
+            needsVerification: true
+        });
+
     } catch (error) {
         res.status(500).send({ message: error.message });
     }

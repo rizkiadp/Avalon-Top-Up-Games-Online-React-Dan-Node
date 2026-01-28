@@ -60,7 +60,25 @@ export interface User {
   vipLevel: string;
 }
 
+export interface Log {
+  id: number;
+  userId: number;
+  username: string;
+  action: string;
+  details: string;
+  ip: string;
+  createdAt: string;
+}
+
 export interface ChatMessage {
   role: 'user' | 'model';
   parts: { text: string }[];
+}
+
+export interface Banner {
+  id: number;
+  title: string;
+  imageUrl: string;
+  isActive: boolean;
+  actionUrl?: string;
 }

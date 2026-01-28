@@ -28,6 +28,11 @@ db.users = require("./user.model.js")(sequelize, Sequelize);
 db.games = require("./game.model.js")(sequelize, Sequelize);
 db.items = require("./item.model.js")(sequelize, Sequelize); // New
 db.transactions = require("./transaction.model.js")(sequelize, Sequelize);
+db.logs = require("./log.model.js")(sequelize, Sequelize);
+db.Voucher = require('./voucher.model.js')(sequelize, Sequelize);
+db.Banner = require('./banner.model.js')(sequelize, Sequelize);
+db.DailyStats = require('./dailyStats.model.js')(sequelize, Sequelize); // New
+
 
 // Relations
 db.games.hasMany(db.items, { as: "items" });

@@ -1,25 +1,31 @@
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Avalon Games | Top Up Your Favorite Games</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        primary: '#25c0f4',
-                        secondary: '#af25f4',
-                        'background-dark': '#0B1114',
-                        'surface-dark': '#162024',
-                        'surface-accent': '#1a262a',
-                        'border-dark': '#2a3b42'
+                        primary: 'rgb(var(--color-primary) / <alpha-value>)',
+                        secondary: 'rgb(var(--color-secondary) / <alpha-value>)',
+                        'background-dark': 'var(--color-bg)',
+                        'surface-dark': 'var(--color-surface)',
+                        'surface-accent': 'var(--color-surface-accent)',
+                        'border-dark': 'var(--color-border)',
+                        'text-main': 'var(--color-text)',
+                        'text-muted': 'var(--color-text-muted)',
                     },
                     fontFamily: {
                         display: ['Space Grotesk', 'sans-serif'],
@@ -27,48 +33,110 @@
                         mono: ['JetBrains Mono', 'monospace']
                     },
                     backgroundImage: {
-                        'grid-pattern': "linear-gradient(to right, #1a262b 1px, transparent 1px), linear-gradient(to bottom, #1a262b 1px, transparent 1px)",
+                        'grid-pattern': "linear-gradient(to right, var(--color-grid) 1px, transparent 1px), linear-gradient(to bottom, var(--color-grid) 1px, transparent 1px)",
                     }
                 }
             }
         }
     </script>
     <style>
+        :root {
+            /* Light Mode Defaults */
+            --color-primary: 37 192 244;
+            /* #25c0f4 */
+            --color-secondary: 175 37 244;
+            /* #af25f4 */
+
+            --color-bg: #f8fafc;
+            /* Slate 50 */
+            --color-surface: #ffffff;
+            /* White */
+            --color-surface-accent: #f1f5f9;
+            /* Slate 100 */
+            --color-border: #e2e8f0;
+            /* Slate 200 */
+
+            --color-text: #0f172a;
+            /* Slate 900 */
+            --color-text-muted: #64748b;
+            /* Slate 500 */
+
+            --color-grid: rgba(148, 163, 184, 0.1);
+        }
+
+        .dark {
+            /* Dark Mode Overrides */
+            --color-bg: #0B1114;
+            --color-surface: #162024;
+            --color-surface-accent: #1a262a;
+            --color-border: #2a3b42;
+
+            --color-text: #ffffff;
+            --color-text-muted: #94a3b8;
+
+            --color-grid: #1a262b;
+        }
+
         body {
-            background-color: #0B1114;
-            color: #ffffff;
+            background-color: var(--color-bg);
+            color: var(--color-text);
             font-family: 'Space Grotesk', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
+
         .glass-panel {
-            background: rgba(22, 32, 36, 0.7);
+            background: rgba(var(--color-surface), 0.7);
+            /* Invalid CSS variable usage, will fix manually to handle rgb/hex diffs or use simple transparency */
+            background: var(--color-surface);
+            /* Fallback */
+            background-color: color-mix(in srgb, var(--color-surface), transparent 30%);
+            /* Modern CSS */
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--color-border);
         }
+
+        /* Fallback for older browsers or simple implementation since variables mix hex and rgb */
+        :root .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .dark .glass-panel {
+            background: rgba(22, 32, 36, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            /* Keep original dark border */
+        }
+
         .cyber-grid {
             background-image: linear-gradient(rgba(37, 192, 244, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(37, 192, 244, 0.05) 1px, transparent 1px);
             background-size: 40px 40px;
         }
+
         .neon-glow {
             text-shadow: 0 0 10px rgba(37, 192, 244, 0.5);
         }
+
         .shadow-neon {
             box-shadow: 0 0 15px rgba(37, 192, 244, 0.3);
         }
+
         ::-webkit-scrollbar {
             width: 8px;
         }
+
         ::-webkit-scrollbar-track {
             background: #0b1215;
         }
+
         ::-webkit-scrollbar-thumb {
             background: #283539;
             border-radius: 4px;
         }
+
         ::-webkit-scrollbar-thumb:hover {
             background: #25c0f4;
         }
     </style>
-<script type="importmap">
+    <script type="importmap">
 {
   "imports": {
     "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
@@ -79,10 +147,12 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+    <link rel="stylesheet" href="/index.css">
 </head>
+
 <body>
     <div id="root"></div>
-<script type="module" src="/index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>
